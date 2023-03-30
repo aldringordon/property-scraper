@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import json
 
 from DynamicScraper import Scraper
+from Property import Property
 
 
 def get_auth_headers():
@@ -35,6 +36,17 @@ def get_initial_href(price, suburb):
     return href
 
 
+def display_all_properties(properties):
+    for property in properties:
+        property.print_property()
+
+
+def write_all_properties_to_json(properties):
+    filename = 'RealEstateComAu-Properties-Output.json'
+    with open(filename, 'w') as f:
+        json.dump([property.get_property() for property in properties], f)
+
+
 def main():
 
     print('starting...')
@@ -42,7 +54,8 @@ def main():
     suburb = get_suburb()
 
     # Initial Search Href
-    search_href = get_initial_href(price, suburb)
+    initial_search_href = get_initial_href(price, suburb)
+    search_href = initial_search_href
 
     print('Retrieving auth headers...')
     headers = get_auth_headers()
@@ -57,13 +70,15 @@ def main():
     pages_searched = 0
     properties_found = 0
 
-    print(f'Beginning Search for: {search_href}')
+    properties = []
 
+    print(f'Beginning Search for: {search_href}')
     keep_on_keeping = True
     while keep_on_keeping:
 
-        # soup = scrape(search_href, headers)
         soup = scraper.scrape(search_href)
+
+        # Todo: Add a check to see if the search returned any results
 
         for card in soup.find_all("div", {"class": "residential-card__content"}):
 
@@ -84,14 +99,10 @@ def main():
 
             price = card.find("span", {"class": "property-price"}).text
 
-            print('\n------')
-            print(f'Address: {address}')
-            print(f'Price: {price}')
-            print(f'Type: {property_type}')
-            print('Property_Details:')
-            for x in property_details:
-                print(f'\t{x}')
-            print(f'URL: https://www.realestate.com.au{address_href}')
+            property = Property(address, price, property_type,
+                                property_details, address_href)
+
+            properties.append(property)
 
             properties_found += 1
 
@@ -105,12 +116,22 @@ def main():
         else:
             keep_on_keeping = False
 
+    # Ask user if they want to display all properties
+    display = input('Display all properties? (y/n): ')
+    if display == 'y':
+        display_all_properties(properties)
+
+    # Ask user if they want to write all properties to a json file
+    write = input('Write all properties to a json file? (y/n): ')
+    if write == 'y':
+        write_all_properties_to_json(properties)
+
     print()
     print(f'Scraper Stats: {scraper.get_stats()}')
     print()
     print(f'Pages Searched: {pages_searched}')
     print(f'Properties Searched: {properties_found}')
-    print(f'Original Search: {search_href}')
+    print(f'Original Search: https://{website_url}{initial_search_href}')
     print()
 
 
