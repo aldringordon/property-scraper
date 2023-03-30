@@ -4,8 +4,7 @@ from http.client import IncompleteRead
 from bs4 import BeautifulSoup
 import json
 
-TOTAL_REQUESTS = 0
-FAILED_REQUESTS = 0
+from DynamicScraper import Scraper
 
 
 def get_auth_headers():
@@ -18,38 +17,6 @@ def get_auth_headers():
     except FileNotFoundError:
         print(f'{filename} not found')
         return None
-
-
-def scrape(href, headers, attempt=0):
-
-    try:
-        conn = http.client.HTTPSConnection("www.realestate.com.au")
-        payload = ""
-
-        print('Making request...')
-        conn.request("GET", href, payload, headers)
-
-        print('Waiting for response...')
-        time.sleep(1)
-
-        print('Getting response...')
-        r = conn.getresponse()
-
-        print('Reading response...')
-        soup = BeautifulSoup(r, "html.parser")
-
-        conn.close()
-
-    except IncompleteRead:
-        conn.close()
-
-        # Oh well, reconnect and keep trucking
-        print(f'\n\tAttempt({attempt}) - Incomplete Read  - ({href})')
-        print('\tRecursively Trying Again lol..')
-        return scrape(href, headers, attempt=attempt+1)
-
-    print('Returning data...')
-    return soup
 
 
 def get_price_range():
@@ -77,19 +44,26 @@ def main():
     # Initial Search Href
     search_href = get_initial_href(price, suburb)
 
+    print('Retrieving auth headers...')
+    headers = get_auth_headers()
+
+    payload = ""
+
+    website_url = "www.realestate.com.au"
+
+    scraper = Scraper(website_url, headers, payload)
+
     # Tracking
     pages_searched = 0
     properties_found = 0
-
-    print('Retrieving auth headers...')
-    headers = get_auth_headers()
 
     print(f'Beginning Search for: {search_href}')
 
     keep_on_keeping = True
     while keep_on_keeping:
 
-        soup = scrape(search_href, headers)
+        # soup = scrape(search_href, headers)
+        soup = scraper.scrape(search_href)
 
         for card in soup.find_all("div", {"class": "residential-card__content"}):
 
@@ -132,12 +106,12 @@ def main():
             keep_on_keeping = False
 
     print()
+    print(f'Scraper Stats: {scraper.get_stats()}')
+    print()
     print(f'Pages Searched: {pages_searched}')
     print(f'Properties Searched: {properties_found}')
     print(f'Original Search: {search_href}')
     print()
-    print(f'Total Requests: {TOTAL_REQUESTS}')
-    print(f'Failed Requests: {FAILED_REQUESTS}')
 
 
 if __name__ == '__main__':
