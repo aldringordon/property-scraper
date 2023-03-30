@@ -39,10 +39,10 @@ def scrape(href, headers, attempt=0):
         soup = BeautifulSoup(r, "html.parser")
 
         conn.close()
-        TOTAL_REQUESTS += 1
+
     except IncompleteRead:
         conn.close()
-        FAILED_REQUESTS += 1
+
         # Oh well, reconnect and keep trucking
         print(f'\n\tAttempt({attempt}) - Incomplete Read  - ({href})')
         print('\tRecursively Trying Again lol..')
