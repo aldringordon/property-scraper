@@ -2,9 +2,13 @@
 Scrapers for Australian RealEstate websites
 
 realestate.com.au ✅
+
 domain.com.au ⚠️
+
 re88.com.au ⚠️
+
 daveyrealestate.com.au ⚠️
+
 allhomes.com.au ⚠️
 
 ---
